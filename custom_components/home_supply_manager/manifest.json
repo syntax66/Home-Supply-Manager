@@ -1,0 +1,14 @@
+{
+  "domain": "home_supply_manager",
+  "name": "Home Supply Manager",
+  "codeowners": [
+    "@syntax"
+  ],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/syntax66/home-supply-manager",
+  "integration_type": "device",
+  "iot_class": "calculated",
+  "requirements": [],
+  "version": "1.0.0"
+}

@@ -1,0 +1,11 @@
+{
+  "name": "Home Supply Manager",
+  "content_in_root": false,
+  "filename": "home_supply_manager",
+  "render_readme": true,
+  "domains": [
+    "device"
+  ],
+  "homeassistant": "2025.11.0",
+  "iot_class": "calculated"
+}

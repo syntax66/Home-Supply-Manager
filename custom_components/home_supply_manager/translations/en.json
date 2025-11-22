@@ -1,0 +1,85 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add Product to Track",
+        "description": "Configure your first product",
+        "data": {
+          "product_name": "Product Name",
+          "icon": "Icon (e.g., mdi:filter, mdi:battery)",
+          "stock_quantity": "Stock Quantity",
+          "replacement_interval_days": "Replacement Interval (days)",
+          "last_replacement_date": "Last Replacement Date (YYYY-MM-DD)"
+        }
+      }
+    },
+    "error": {
+      "invalid_date": "Invalid date format. Use YYYY-MM-DD format.",
+      "product_already_exists": "A product with this name already exists."
+    },
+    "abort": {
+      "already_configured": "This product is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Manage Products",
+        "description": "You have {product_count} products in the system",
+        "data": {
+          "action": "Choose action"
+        }
+      },
+      "add_product": {
+        "title": "Add New Product",
+        "description": "Configure a new product to track",
+        "data": {
+          "product_name": "Product Name",
+          "icon": "Icon (e.g., mdi:filter, mdi:battery)",
+          "stock_quantity": "Stock Quantity",
+          "replacement_interval_days": "Replacement Interval (days)",
+          "last_replacement_date": "Last Replacement Date (YYYY-MM-DD)"
+        }
+      },
+      "select_product_edit": {
+        "title": "Select Product to Edit",
+        "description": "Choose which product you want to edit",
+        "data": {
+          "product": "Product"
+        }
+      },
+      "edit_product": {
+        "title": "Edit Product",
+        "description": "Update product settings",
+        "data": {
+          "product_name": "Product Name",
+          "icon": "Icon (e.g., mdi:filter, mdi:battery)",
+          "stock_quantity": "Stock Quantity",
+          "replacement_interval_days": "Replacement Interval (days)",
+          "last_replacement_date": "Last Replacement Date (YYYY-MM-DD)"
+        }
+      },
+      "select_product_delete": {
+        "title": "Select Product to Delete",
+        "description": "Choose which product you want to delete",
+        "data": {
+          "product": "Product"
+        }
+      },
+      "confirm_delete": {
+        "title": "Confirm Deletion",
+        "description": "Are you sure you want to delete '{product_name}'? This action cannot be undone.",
+        "data": {
+          "confirm": "Yes, delete product"
+        }
+      }
+    },
+    "error": {
+      "invalid_date": "Invalid date format. Use YYYY-MM-DD format.",
+      "product_already_exists": "A product with this name already exists."
+    },
+    "abort": {
+      "user_cancelled": "Cancelled by user."
+    }
+  }
+}

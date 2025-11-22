@@ -1,0 +1,40 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add Product",
+        "description": "Configure a new product to track",
+        "data": {
+          "product_name": "Product Name",
+          "stock_quantity": "Stock Quantity",
+          "replacement_interval_days": "Replacement Interval (days)",
+          "last_replacement_date": "Last Replacement Date (YYYY-MM-DD)"
+        }
+      }
+    },
+    "error": {
+      "invalid_date": "Invalid date format. Please use YYYY-MM-DD.",
+      "product_already_exists": "A product with this name already exists."
+    },
+    "abort": {
+      "already_configured": "This product is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Edit Product",
+        "description": "Update product settings",
+        "data": {
+          "product_name": "Product Name",
+          "stock_quantity": "Stock Quantity",
+          "replacement_interval_days": "Replacement Interval (days)",
+          "last_replacement_date": "Last Replacement Date (YYYY-MM-DD)"
+        }
+      }
+    },
+    "error": {
+      "invalid_date": "Invalid date format. Please use YYYY-MM-DD."
+    }
+  }
+}
