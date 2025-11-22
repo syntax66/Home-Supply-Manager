@@ -11,6 +11,8 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import (
+    CONF_ICON,
+    CONF_IS_CYCLICAL,
     CONF_LAST_REPLACEMENT_DATE,
     CONF_PRODUCT_ID,
     CONF_PRODUCT_NAME,
@@ -80,6 +82,11 @@ class SupplyManagerCoordinator(DataUpdateCoordinator):
             return None
 
         product = self._products[product_id]
+        
+        # Check if product is cyclical
+        if not product.get(CONF_IS_CYCLICAL, True):
+            return None
+
         last_replacement_str = product.get(CONF_LAST_REPLACEMENT_DATE)
         replacement_interval = product.get(CONF_REPLACEMENT_INTERVAL_DAYS)
 
@@ -108,7 +115,10 @@ class SupplyManagerCoordinator(DataUpdateCoordinator):
         new_stock = max(0, current_stock - 1)
         
         self._products[product_id][CONF_STOCK_QUANTITY] = new_stock
-        self._products[product_id][CONF_LAST_REPLACEMENT_DATE] = datetime.now().date().isoformat()
+        
+        # Only update date if cyclical
+        if self._products[product_id].get(CONF_IS_CYCLICAL, True):
+            self._products[product_id][CONF_LAST_REPLACEMENT_DATE] = datetime.now().date().isoformat()
 
         await self._async_save_products()
         await self.async_refresh()

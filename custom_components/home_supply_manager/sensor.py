@@ -16,6 +16,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
+    CONF_IS_CYCLICAL,
     CONF_LAST_REPLACEMENT_DATE,
     CONF_PRODUCT_ID,
     CONF_PRODUCT_NAME,
@@ -44,13 +45,17 @@ async def async_setup_entry(
     entities: list[SupplyManagerSensor] = []
 
     # Create sensors for each product
+    # Create sensors for each product
     for product_id in coordinator.data:
-        entities.extend(
-            [
-                SupplyManagerDaysUntilReplacementSensor(coordinator, product_id),
-                SupplyManagerStockSensor(coordinator, product_id),
-            ]
-        )
+        product_data = coordinator.data[product_id]
+        is_cyclical = product_data.get(CONF_IS_CYCLICAL, True)
+        
+        sensors = [SupplyManagerStockSensor(coordinator, product_id)]
+        
+        if is_cyclical:
+            sensors.append(SupplyManagerDaysUntilReplacementSensor(coordinator, product_id))
+            
+        entities.extend(sensors)
 
     async_add_entities(entities)
 
