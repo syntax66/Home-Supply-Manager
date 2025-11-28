@@ -13,6 +13,7 @@ from .const import (
     CONF_PRODUCT_ID,
     CONF_PRODUCT_NAME,
     CONF_STOCK_QUANTITY,
+    CONF_TRACK_STOCK,
     DOMAIN,
 )
 from .coordinator import SupplyManagerCoordinator
@@ -33,7 +34,9 @@ async def async_setup_entry(
 
     # Create stock number entity for each product
     for product_id in coordinator.data:
-        entities.append(SupplyManagerStockNumber(coordinator, product_id))
+        product_data = coordinator.data[product_id]
+        if product_data.get(CONF_TRACK_STOCK, True):
+            entities.append(SupplyManagerStockNumber(coordinator, product_id))
 
     async_add_entities(entities)
 

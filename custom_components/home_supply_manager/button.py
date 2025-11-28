@@ -13,6 +13,7 @@ from .const import (
     CONF_PRODUCT_ID,
     CONF_PRODUCT_NAME,
     CONF_STOCK_QUANTITY,
+    CONF_TRACK_STOCK,
     DOMAIN,
 )
 from .coordinator import SupplyManagerCoordinator
@@ -73,8 +74,9 @@ class SupplyManagerReplaceButton(SupplyManagerButton):
         """Handle the button press."""
         product = self.product_data
         stock = product.get(CONF_STOCK_QUANTITY, 0)
+        track_stock = product.get(CONF_TRACK_STOCK, True)
         
-        if stock <= 0:
+        if track_stock and stock <= 0:
             _LOGGER.warning(
                 "Cannot replace item %s: stock is 0. Please add stock first.",
                 self.product_id

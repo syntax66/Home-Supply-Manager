@@ -6,14 +6,15 @@
                 "description": "Configure a new product to track",
                 "data": {
                     "product_name": "Product Name",
-                    "stock_quantity": "Stock Quantity",
-                    "is_cyclical": "Cyclical Replacement"
+                    "is_cyclical": "Cyclical Replacement",
+                    "track_stock": "Track Stock"
                 }
             },
-            "cyclical_settings": {
-                "title": "Cyclical Settings",
-                "description": "Configure replacement settings",
+            "settings": {
+                "title": "Settings",
+                "description": "Configure product settings",
                 "data": {
+                    "stock_quantity": "Stock Quantity",
                     "replacement_interval_days": "Replacement Interval (days)",
                     "last_replacement_date": "Last Replacement Date (YYYY-MM-DD)"
                 }
@@ -34,14 +35,15 @@
                 "description": "Update product settings",
                 "data": {
                     "product_name": "Product Name",
-                    "stock_quantity": "Stock Quantity",
-                    "is_cyclical": "Cyclical Replacement"
+                    "is_cyclical": "Cyclical Replacement",
+                    "track_stock": "Track Stock"
                 }
             },
-            "cyclical_settings": {
-                "title": "Cyclical Settings",
-                "description": "Configure replacement settings",
+            "settings": {
+                "title": "Settings",
+                "description": "Configure product settings",
                 "data": {
+                    "stock_quantity": "Stock Quantity",
                     "replacement_interval_days": "Replacement Interval (days)",
                     "last_replacement_date": "Last Replacement Date (YYYY-MM-DD)"
                 }

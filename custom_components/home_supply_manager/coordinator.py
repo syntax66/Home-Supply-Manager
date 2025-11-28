@@ -18,6 +18,7 @@ from .const import (
     CONF_PRODUCT_NAME,
     CONF_REPLACEMENT_INTERVAL_DAYS,
     CONF_STOCK_QUANTITY,
+    CONF_TRACK_STOCK,
     DOMAIN,
     STORAGE_KEY,
     STORAGE_VERSION,
@@ -67,6 +68,8 @@ class SupplyManagerCoordinator(DataUpdateCoordinator):
                 CONF_LAST_REPLACEMENT_DATE: self.entry.data.get(
                     CONF_LAST_REPLACEMENT_DATE
                 ),
+                CONF_TRACK_STOCK: self.entry.data.get(CONF_TRACK_STOCK, True),
+                CONF_IS_CYCLICAL: self.entry.data.get(CONF_IS_CYCLICAL, True),
             }
             await self._async_save_products()
 

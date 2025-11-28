@@ -22,6 +22,7 @@ from .const import (
     CONF_PRODUCT_NAME,
     CONF_REPLACEMENT_INTERVAL_DAYS,
     CONF_STOCK_QUANTITY,
+    CONF_TRACK_STOCK,
     DOMAIN,
     ICON_CALENDAR,
     ICON_PACKAGE,
@@ -49,8 +50,11 @@ async def async_setup_entry(
     for product_id in coordinator.data:
         product_data = coordinator.data[product_id]
         is_cyclical = product_data.get(CONF_IS_CYCLICAL, True)
+        track_stock = product_data.get(CONF_TRACK_STOCK, True)
         
-        sensors = [SupplyManagerStockSensor(coordinator, product_id)]
+        sensors = []
+        if track_stock:
+            sensors.append(SupplyManagerStockSensor(coordinator, product_id))
         
         if is_cyclical:
             sensors.append(SupplyManagerDaysUntilReplacementSensor(coordinator, product_id))

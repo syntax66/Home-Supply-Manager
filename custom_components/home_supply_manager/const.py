@@ -12,12 +12,14 @@ CONF_LAST_REPLACEMENT_DATE = "last_replacement_date"
 CONF_PRODUCT_ID = "product_id"
 CONF_ICON = "icon"
 CONF_IS_CYCLICAL = "is_cyclical"
+CONF_TRACK_STOCK = "track_stock"
 
 # Default values
 DEFAULT_STOCK_QUANTITY = 1
 DEFAULT_REPLACEMENT_INTERVAL_DAYS = 30
 DEFAULT_ICON = "mdi:package-variant"
 DEFAULT_IS_CYCLICAL = True
+DEFAULT_TRACK_STOCK = True
 
 # Update interval
 UPDATE_INTERVAL = timedelta(hours=1)

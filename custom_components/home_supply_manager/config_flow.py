@@ -20,10 +20,12 @@ from .const import (
     CONF_PRODUCT_NAME,
     CONF_REPLACEMENT_INTERVAL_DAYS,
     CONF_STOCK_QUANTITY,
+    CONF_TRACK_STOCK,
     DEFAULT_ICON,
     DEFAULT_IS_CYCLICAL,
     DEFAULT_REPLACEMENT_INTERVAL_DAYS,
     DEFAULT_STOCK_QUANTITY,
+    DEFAULT_TRACK_STOCK,
     DOMAIN,
 )
 from .coordinator import SupplyManagerCoordinator
@@ -57,15 +59,19 @@ class SupplyManagerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             await self.async_set_unique_id(product_id)
             self._abort_if_unique_id_configured()
 
-            if user_input.get(CONF_IS_CYCLICAL, True):
-                return await self.async_step_cyclical_settings()
+            track_stock = user_input.get(CONF_TRACK_STOCK, DEFAULT_TRACK_STOCK)
+            is_cyclical = user_input.get(CONF_IS_CYCLICAL, DEFAULT_IS_CYCLICAL)
+
+            if track_stock or is_cyclical:
+                return await self.async_step_settings()
             
             return self.async_create_entry(
                 title=self._user_input[CONF_PRODUCT_NAME],
                 data={
                     CONF_PRODUCT_ID: product_id,
                     CONF_PRODUCT_NAME: self._user_input[CONF_PRODUCT_NAME],
-                    CONF_STOCK_QUANTITY: self._user_input[CONF_STOCK_QUANTITY],
+                    CONF_STOCK_QUANTITY: DEFAULT_STOCK_QUANTITY,
+                    CONF_TRACK_STOCK: False,
                     CONF_IS_CYCLICAL: False,
                 },
             )
@@ -73,9 +79,9 @@ class SupplyManagerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         data_schema = vol.Schema(
             {
                 vol.Required(CONF_PRODUCT_NAME): cv.string,
-                vol.Required(
-                    CONF_STOCK_QUANTITY, default=DEFAULT_STOCK_QUANTITY
-                ): cv.positive_int,
+                vol.Optional(
+                    CONF_TRACK_STOCK, default=DEFAULT_TRACK_STOCK
+                ): bool,
                 vol.Required(
                     CONF_IS_CYCLICAL, default=DEFAULT_IS_CYCLICAL
                 ): bool,
@@ -88,58 +94,58 @@ class SupplyManagerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def async_step_cyclical_settings(
+    async def async_step_settings(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Handle the cyclical settings step."""
+        """Handle the settings step (stock and/or cyclical)."""
         errors: dict[str, str] = {}
+        
+        track_stock = self._user_input.get(CONF_TRACK_STOCK, DEFAULT_TRACK_STOCK)
+        is_cyclical = self._user_input.get(CONF_IS_CYCLICAL, DEFAULT_IS_CYCLICAL)
 
         if user_input is not None:
-            # Validate date format
-            try:
-                datetime.fromisoformat(user_input[CONF_LAST_REPLACEMENT_DATE])
-            except ValueError:
-                errors[CONF_LAST_REPLACEMENT_DATE] = "invalid_date"
+            # Validate date format if cyclical
+            if is_cyclical:
+                try:
+                    datetime.fromisoformat(user_input[CONF_LAST_REPLACEMENT_DATE])
+                except ValueError:
+                    errors[CONF_LAST_REPLACEMENT_DATE] = "invalid_date"
 
             if not errors:
                 self._user_input.update(user_input)
                 
-                # Re-generate product_id (it's already done in step_user but we need it for data)
+                # Re-generate product_id
                 product_id = self._user_input[CONF_PRODUCT_NAME].lower().replace(" ", "_")
                 product_id = "".join(c for c in product_id if c.isalnum() or c == "_")
 
+                data = {
+                    CONF_PRODUCT_ID: product_id,
+                    CONF_PRODUCT_NAME: self._user_input[CONF_PRODUCT_NAME],
+                    CONF_TRACK_STOCK: track_stock,
+                    CONF_IS_CYCLICAL: is_cyclical,
+                    CONF_STOCK_QUANTITY: self._user_input.get(CONF_STOCK_QUANTITY, DEFAULT_STOCK_QUANTITY),
+                }
+                
+                if is_cyclical:
+                    data[CONF_REPLACEMENT_INTERVAL_DAYS] = self._user_input[CONF_REPLACEMENT_INTERVAL_DAYS]
+                    data[CONF_LAST_REPLACEMENT_DATE] = self._user_input[CONF_LAST_REPLACEMENT_DATE]
+
                 return self.async_create_entry(
                     title=self._user_input[CONF_PRODUCT_NAME],
-                    data={
-                        CONF_PRODUCT_ID: product_id,
-                        CONF_PRODUCT_NAME: self._user_input[CONF_PRODUCT_NAME],
-                        CONF_STOCK_QUANTITY: self._user_input[CONF_STOCK_QUANTITY],
-                        CONF_IS_CYCLICAL: True,
-                        CONF_REPLACEMENT_INTERVAL_DAYS: self._user_input[
-                            CONF_REPLACEMENT_INTERVAL_DAYS
-                        ],
-                        CONF_LAST_REPLACEMENT_DATE: self._user_input[
-                            CONF_LAST_REPLACEMENT_DATE
-                        ],
-                    },
+                    data=data,
                 )
 
-        data_schema = vol.Schema(
-            {
-                vol.Required(
-                    CONF_REPLACEMENT_INTERVAL_DAYS,
-                    default=DEFAULT_REPLACEMENT_INTERVAL_DAYS,
-                ): cv.positive_int,
-                vol.Required(
-                    CONF_LAST_REPLACEMENT_DATE,
-                    default=datetime.now().date().isoformat(),
-                ): cv.string,
-            }
-        )
+        schema = {}
+        if track_stock:
+            schema[vol.Required(CONF_STOCK_QUANTITY, default=DEFAULT_STOCK_QUANTITY)] = cv.positive_int
+            
+        if is_cyclical:
+            schema[vol.Required(CONF_REPLACEMENT_INTERVAL_DAYS, default=DEFAULT_REPLACEMENT_INTERVAL_DAYS)] = cv.positive_int
+            schema[vol.Required(CONF_LAST_REPLACEMENT_DATE, default=datetime.now().date().isoformat())] = cv.string
 
         return self.async_show_form(
-            step_id="cyclical_settings",
-            data_schema=data_schema,
+            step_id="settings",
+            data_schema=vol.Schema(schema),
             errors=errors,
         )
 
@@ -178,17 +184,24 @@ class SupplyManagerOptionsFlow(config_entries.OptionsFlow):
         if user_input is not None:
             self._user_input.update(user_input)
             
-            if user_input.get(CONF_IS_CYCLICAL, True):
-                return await self.async_step_cyclical_settings()
+            track_stock = self._user_input.get(CONF_TRACK_STOCK, DEFAULT_TRACK_STOCK)
+            is_cyclical = self._user_input.get(CONF_IS_CYCLICAL, DEFAULT_IS_CYCLICAL)
             
-            # Update product as non-cyclical
+            if track_stock or is_cyclical:
+                return await self.async_step_settings()
+            
+            # Update product as simple (no stock tracking, no cyclical)
             await coordinator.update_product(
                 product_id,
                 {
                     CONF_PRODUCT_NAME: self._user_input[CONF_PRODUCT_NAME],
-                    CONF_STOCK_QUANTITY: self._user_input[CONF_STOCK_QUANTITY],
+                    CONF_STOCK_QUANTITY: DEFAULT_STOCK_QUANTITY,
+                    CONF_TRACK_STOCK: False,
                     CONF_IS_CYCLICAL: False,
                 },
+            )
+            self.hass.async_create_task(
+                self.hass.config_entries.async_reload(self.config_entry.entry_id)
             )
             return self.async_create_entry(title="", data={})
         
@@ -199,12 +212,12 @@ class SupplyManagerOptionsFlow(config_entries.OptionsFlow):
                 default=product_data.get(CONF_PRODUCT_NAME, ""),
             ): cv.string,
             vol.Required(
-                CONF_STOCK_QUANTITY,
-                default=product_data.get(CONF_STOCK_QUANTITY, DEFAULT_STOCK_QUANTITY),
-            ): cv.positive_int,
-            vol.Required(
                 CONF_IS_CYCLICAL,
                 default=product_data.get(CONF_IS_CYCLICAL, DEFAULT_IS_CYCLICAL),
+            ): bool,
+            vol.Optional(
+                CONF_TRACK_STOCK,
+                default=product_data.get(CONF_TRACK_STOCK, DEFAULT_TRACK_STOCK),
             ): bool,
         })
         
@@ -213,10 +226,10 @@ class SupplyManagerOptionsFlow(config_entries.OptionsFlow):
             data_schema=data_schema,
         )
 
-    async def async_step_cyclical_settings(
+    async def async_step_settings(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Handle the cyclical settings step for options."""
+        """Handle the settings step for options."""
         coordinator: SupplyManagerCoordinator = self.hass.data[DOMAIN][
             self.config_entry.entry_id
         ]
@@ -224,53 +237,64 @@ class SupplyManagerOptionsFlow(config_entries.OptionsFlow):
         product_data = coordinator.data.get(product_id, {})
         
         errors: dict[str, str] = {}
+        
+        track_stock = self._user_input.get(CONF_TRACK_STOCK, DEFAULT_TRACK_STOCK)
+        is_cyclical = self._user_input.get(CONF_IS_CYCLICAL, DEFAULT_IS_CYCLICAL)
 
         if user_input is not None:
-            # Validate date format
-            try:
-                datetime.fromisoformat(user_input[CONF_LAST_REPLACEMENT_DATE])
-            except ValueError:
-                errors[CONF_LAST_REPLACEMENT_DATE] = "invalid_date"
+            # Validate date format if cyclical
+            if is_cyclical:
+                try:
+                    datetime.fromisoformat(user_input[CONF_LAST_REPLACEMENT_DATE])
+                except ValueError:
+                    errors[CONF_LAST_REPLACEMENT_DATE] = "invalid_date"
             
             if not errors:
                 self._user_input.update(user_input)
                 
-                # Update product as cyclical
-                await coordinator.update_product(
-                    product_id,
-                    {
-                        CONF_PRODUCT_NAME: self._user_input[CONF_PRODUCT_NAME],
-                        CONF_STOCK_QUANTITY: self._user_input[CONF_STOCK_QUANTITY],
-                        CONF_IS_CYCLICAL: True,
-                        CONF_REPLACEMENT_INTERVAL_DAYS: self._user_input[
-                            CONF_REPLACEMENT_INTERVAL_DAYS
-                        ],
-                        CONF_LAST_REPLACEMENT_DATE: self._user_input[
-                            CONF_LAST_REPLACEMENT_DATE
-                        ],
-                    },
+                data = {
+                    CONF_PRODUCT_NAME: self._user_input[CONF_PRODUCT_NAME],
+                    CONF_TRACK_STOCK: track_stock,
+                    CONF_IS_CYCLICAL: is_cyclical,
+                    CONF_STOCK_QUANTITY: self._user_input.get(CONF_STOCK_QUANTITY, DEFAULT_STOCK_QUANTITY),
+                }
+                
+                if is_cyclical:
+                    data[CONF_REPLACEMENT_INTERVAL_DAYS] = self._user_input[CONF_REPLACEMENT_INTERVAL_DAYS]
+                    data[CONF_LAST_REPLACEMENT_DATE] = self._user_input[CONF_LAST_REPLACEMENT_DATE]
+                
+                # Update product
+                await coordinator.update_product(product_id, data)
+                self.hass.async_create_task(
+                    self.hass.config_entries.async_reload(self.config_entry.entry_id)
                 )
                 return self.async_create_entry(title="", data={})
 
-        data_schema = vol.Schema({
-            vol.Required(
+        schema = {}
+        if track_stock:
+            schema[vol.Required(
+                CONF_STOCK_QUANTITY,
+                default=product_data.get(CONF_STOCK_QUANTITY, DEFAULT_STOCK_QUANTITY),
+            )] = cv.positive_int
+            
+        if is_cyclical:
+            schema[vol.Required(
                 CONF_REPLACEMENT_INTERVAL_DAYS,
                 default=product_data.get(
                     CONF_REPLACEMENT_INTERVAL_DAYS,
                     DEFAULT_REPLACEMENT_INTERVAL_DAYS,
                 ),
-            ): cv.positive_int,
-            vol.Required(
+            )] = cv.positive_int
+            schema[vol.Required(
                 CONF_LAST_REPLACEMENT_DATE,
                 default=product_data.get(
                     CONF_LAST_REPLACEMENT_DATE,
                     datetime.now().date().isoformat(),
                 ),
-            ): cv.string,
-        })
+            )] = cv.string
 
         return self.async_show_form(
-            step_id="cyclical_settings",
-            data_schema=data_schema,
+            step_id="settings",
+            data_schema=vol.Schema(schema),
             errors=errors,
         )
